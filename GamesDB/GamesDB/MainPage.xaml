@@ -7,50 +7,66 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewModels="using:GamesDB.ViewModel"
     xmlns:converters="using:GamesDB.Converters"
-    mc:Ignorable="d">
+    mc:Ignorable="d" KeyUp="Page_KeyUp">
 
     <Page.Resources>
         <converters:ObjectExistsToVisible x:Key="ObjectExistsToVisible" />
     </Page.Resources>
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid Background="#2e2e1f">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="1.2*" />
+            <RowDefinition Height="8*" />
+            <RowDefinition Height="0.8*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Stretch">
-            <TextBox x:Name="queryText" TextWrapping="NoWrap"></TextBox>
-            <Button x:Name="btnSearch" Click="btnSearch_Click">Search</Button>
+
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" >
+            <Button x:Uid="btnSearch" Foreground="White" HorizontalAlignment="Stretch" x:Name="btnSearch" Content="" Click="btnSearch_Click"/>
+            <TextBox Background="#e0e0d1" Foreground="White" x:Name="queryText" HorizontalAlignment="Stretch" PlaceholderText="Enter a name to search..."
+              Width="Auto"
+              TextWrapping="NoWrap"
+              TextAlignment="Center"></TextBox>
         </StackPanel>
         
-        <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Vertical" x:Name="spNames" Visibility="Visible">
-            <ListView  x:Name="MainList" 
+        <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Vertical" VerticalAlignment="Stretch" x:Name="spNames">
+            <ListView  x:Name="MainList" Foreground="White"
                 ItemsSource="{x:Bind Titles.Games, Mode=OneWay}"  
                 SelectedIndex="{x:Bind Titles.SelectedIndex, Mode=TwoWay}" 
-                MinWidth="250" Margin="5">
+                Margin="5" VerticalAlignment="Stretch">
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="viewModels:GameVM" >
-                        <TextBlock Text="{x:Bind name, Mode=OneWay}" />
+                        <TextBlock Foreground="White" Text="{x:Bind name, Mode=OneWay}" />
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
         </StackPanel>
 
-    <StackPanel x:Name="InfoPanel" Grid.Column="1" Grid.Row="1" Orientation="Vertical" Visibility="{x:Bind Titles.SelectedGame, Mode=OneWay, Converter={StaticResource ObjectExistsToVisible}}">
-        <TextBlock 
+        <StackPanel x:Name="InfoPanel" Grid.Column="2" Grid.Row="1" Orientation="Vertical" Visibility="{x:Bind Titles.SelectedGame, Mode=OneWay, Converter={StaticResource ObjectExistsToVisible}}">
+            <Image Source="{x:Bind Titles.SelectedGame.cover, Mode=OneWay, FallbackValue='0'}" Height="150" Width="150" HorizontalAlignment="Left"/>
+            <TextBlock 
+                   Foreground="White" 
                 Text="{x:Bind Titles.SelectedGame.name, Mode=OneWay, FallbackValue=''}"
-                Margin="5" />
-        <TextBlock
-                Text="{x:Bind Titles.SelectedGame.summary, Mode=OneWay, FallbackValue=''}" TextWrapping="Wrap" 
-                Margin="5" />
-        <TextBlock 
-                Text="{x:Bind Titles.SelectedGame.id, Mode=OneWay, FallbackValue=''}" 
-                Margin="5" />
-    </StackPanel>
+                    Margin="5" />
+            <TextBlock
+                Foreground="White"
+                    Text="{x:Bind Titles.SelectedGame.summary, Mode=OneWay, FallbackValue=''}" 
+                    TextWrapping="Wrap"
+                    Margin="5" />
+            <TextBlock 
+                Foreground="White"
+                    Text="{x:Bind Titles.SelectedGame.releaseDate, Mode=OneWay, FallbackValue=''}" 
+                    Margin="5" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" x:Name="spPage" Grid.ColumnSpan="2" VerticalAlignment="Bottom" HorizontalAlignment="Center" Grid.Row="2">
+            <Button x:Name="btnBack" x:Uid="btnBack" IsEnabled="False" HorizontalAlignment="Left" Foreground="White" Content="" Click="btnBack_Click"></Button>
+            <TextBlock x:Name="pageNumber" HorizontalAlignment="Stretch" Text="1" Foreground="White" Margin="35,5"></TextBlock>
+            <Button x:Name="btnNext" x:Uid="btnNext" IsEnabled="False" HorizontalAlignment="Right" Foreground="White" Content="" Click="btnNext_Click"></Button>
+        </StackPanel>
     </Grid>
 </Page>

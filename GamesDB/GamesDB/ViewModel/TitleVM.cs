@@ -22,24 +22,16 @@ namespace GamesDB.ViewModel
             _SelectedIndex = -1;
         }
 
-        public async Task populateCollection(string query)
+        public async Task populateCollection(string query, int offset)
         { 
-            games = await gm.GetData(query);
+            games = await gm.GetData(query, offset);
+            // Clear whatever was in the list from previous query
+            _Games.Clear();
             // Populate observable list
-            removeAll(_Games);
             foreach (var game in games)
             {
-                Debug.WriteLine("Adding title to _Games");
                 var ng = new GameVM(game);
                 _Games.Add(ng);
-            }
-        }
-
-        public void removeAll(ObservableCollection<GameVM> games)
-        {
-            for (int i = games.Count - 1; i >= 0; i--)
-            {
-                games.RemoveAt(i);
             }
         }
 

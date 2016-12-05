@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using GamesDB.Data;
 using Windows.Data.Json;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace GamesDB.Model
 {
@@ -14,17 +15,15 @@ namespace GamesDB.Model
         public string queryResponse { get; set; }
         public List<Game> titles { get; set; }
         public List<Game> gamesList = new List<Game>();
+        public static string chars = "\\\""; // Delimiters for image src
 
+        // Empty constructor
         public GamesModel()
         {
-            //queryResponse = query;
-            //GetData();
-            //Debug.WriteLine("New GamesModel()");
 
-            //titles = gamesList; // Initialize titles
         }
 
-        public async Task GetGamesData(string search)
+        public async Task GetGamesData(string search, int offset)
         {
             //Create an HTTP client object
             Windows.Web.Http.HttpClient httpClient = new Windows.Web.Http.HttpClient();
@@ -35,7 +34,7 @@ namespace GamesDB.Model
             httpClient.DefaultRequestHeaders.Accept.Add(new Windows.Web.Http.Headers.HttpMediaTypeWithQualityHeaderValue("application/json")); //Accept header
 
             //Search parameterized uri
-            string uri = "https://igdbcom-internet-game-database-v1.p.mashape.com/games/?fields=name%2Cid%2Csummary%2Crelease_dates.platform%2Crelease_dates.date%2Cgame_modes&offset=0&order=name%3Adesc&search=" + search;
+            string uri = "https://igdbcom-internet-game-database-v1.p.mashape.com/games/?fields=name%2Csummary%2Cfirst_release_date%2Ccover.url&limit=10&offset=" + offset + "&order=name%3Adesc&search=" + search;
             Uri requestUri = new Uri(uri);
 
             //Send the GET request asynchronously and retrieve the response as a string.
@@ -54,9 +53,10 @@ namespace GamesDB.Model
             }
         }
 
-        public async Task<List<Game>> GetData(string userQuery)
+        public async Task<List<Game>> GetData(string userQuery, int offset)
         {
-            await GetGamesData(userQuery);
+            gamesList = new List<Game>();
+            await GetGamesData(userQuery, offset);
 
             var tempGamesList = JsonArray.Parse(queryResponse);
             CreateGamesList(tempGamesList);
@@ -70,6 +70,7 @@ namespace GamesDB.Model
                 var game = item.GetObject();
                 Debug.WriteLine(game.ToString());
                 Game g = new Game();
+                Boolean hasImage = false;
 
                 foreach (var key in game.Keys)
                 {
@@ -79,73 +80,64 @@ namespace GamesDB.Model
 
                     switch (key)
                     {
-                        case "id":
-                            g.id = value.ToString();
-                            Debug.WriteLine(g.id);
-                            break;
                         case "name":
-                            g.name = value.ToString();
+                            string name = Regex.Replace(value.ToString(), @chars, "");
+                            g.name = name;
+                            break;
+                        case "first_release_date":
+                            DateTime date = UnixTimeStampToDateTime(value.GetNumber());
+                            g.releaseDate = "Release date: " + date.ToString();
                             break;
                         case "summary":
-                            g.summary = value.ToString();
+                            string summary = Regex.Replace(value.ToString(), @chars, "");
+                            g.summary = summary;
                             break;
-                        case "game_modes":
-                            /* Put the array containing game_modes into a JsonArray object.
-                             * Create a temporary list of game_modes(strings) and for each
-                             * item in the JsonArray, put the string value into the temp list. 
-                             * Once that's done, assign this Game objects gameModes list
-                             * to the temporary list.
-                             */
-                            JsonArray modes = value.GetArray();
-                            List<string> gameModes = new List<string>();
-                            for (int i = 0; i< modes.Count; i++)
+                        case "cover":
+                            hasImage = true;
+                            JsonObject covers = value.GetObject();
+                            foreach (var val in covers.Keys)
                             {
-                                gameModes.Add(modes[i].ToString());
-                            }
-                            g.gameModes = gameModes;
-                            break;
-                        case "release_dates":
-                           
-                            JsonArray platforms = value.GetArray();
-                            foreach (var obj in platforms)
-                            {
-                                var platform = obj.GetObject();
-                                string plat = "";
-                                string date = "";
-                                foreach (var o in platform.Keys)
-                                {
-                                    IJsonValue val;
-                                    if (!platform.TryGetValue(o, out val))
-                                        continue;
+                                IJsonValue url;
+                                if (!covers.TryGetValue(val, out url))
+                                    continue;
 
-                                    switch (o)
-                                    {
-                                        case "platform":
-                                            plat = val.ToString();
-                                            break;
-                                        case "date":
-                                            date = val.ToString();
-                                            break;
-                                    }
-                                }
-                                Platform p = new Platform();
-                                p.name = plat;
-                                p.releaseDate = date;
-                                try
+                                switch (val)
                                 {
-                                    g.platforms.Add(p);
+                                    case "url":
+                                        // Use a regular expression to fix the returned url for image from DB
+                                        string source = Regex.Replace(url.ToString(), @chars, "");
+                                        source = "http:" + source;
+                                        g.cover = source;
+
+                                        break;
                                 }
-                                catch(Exception ex)
-                                { }
                             }
                             break;
                     } // end switch
 
                 } // end foreach(var key in tempGamesList.Keys )
+                // App was crashing if there was no image for the game in the database, so I've created a failsafe
+                if (hasImage)
+                {
+                    // If game has a cover image, grand, make the boolean false for next iteration
+                    hasImage = false;
+                }
+                else
+                {
+                    // If game has no cover image, use default "No image found" image
+                    g.cover = "/Images/noImage.jpg";
+                }
+                // Add game to list
                 gamesList.Add(g);
-                //Debug.WriteLine(g.name + "XoXOXOXOOOOXOXOXOXOXOXOOXOXOXOXOXOOXOXOXOOXOXOXOXOXOXOOXOXOOXOXOXOOO");
             } // end foreach (var item in tempGamesList)
-            titles = gamesList; // Initialize titles
+        }
+        // Adapted from http://stackoverflow.com/questions/249760/how-to-convert-a-unix-timestamp-to-datetime-and-vice-versa
+        public static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
+        {
+            // Unix timestamp is seconds past epoch
+            System.DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+            dtDateTime = dtDateTime.AddMilliseconds(unixTimeStamp).ToLocalTime();
+            return dtDateTime;
         }
     }
 }

@@ -367,6 +367,9 @@
     <AppxPackagedFile Include="C:\Users\Niks\.nuget\packages\System.Xml.XmlSerializer\4.0.11\lib\netcore50\System.Xml.XmlSerializer.dll">
       <PackagePath>System.Xml.XmlSerializer.dll</PackagePath>
     </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\Niks\Desktop\projects\UWP\GamesDB\GamesDB\Images\noImage.jpg">
+      <PackagePath>Images\noImage.jpg</PackagePath>
+    </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\Niks\Desktop\projects\UWP\GamesDB\GamesDB\Properties\Default.rd.xml">
       <PackagePath>Properties\Default.rd.xml</PackagePath>
     </AppxPackagedFile>
