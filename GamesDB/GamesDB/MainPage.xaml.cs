@@ -91,8 +91,9 @@ namespace GamesDB
                         spPage.Visibility = Visibility.Visible;
                     }
 
-                    // Reset value for offset every search, and disable/enable pagination buttons
+                    // Reset values for every search, and disable/enable pagination buttons
                     offset = 0;
+                    pageNumber.Text = "1";
                     btnBack.IsEnabled = false;
                     btnNext.IsEnabled = true;
                 }
@@ -115,7 +116,7 @@ namespace GamesDB
             Titles.populateCollection(query, offset * 10);
 
             // If there are no more items on subsequent pages, disable next button
-            if (Titles._Games.Count < 12)
+            if (Titles._Games.Count < 10)
             {
                 btnNext.IsEnabled = false;
             }
